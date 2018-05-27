@@ -5,12 +5,13 @@ Created on 2018
 @author: J
 '''
 import numpy as np
-import NeuralNetwork as nnk
 import createData_for_knn as cd
 from sklearn.cross_validation import train_test_split
 from sklearn import preprocessing
+from sklearn import metrics
 import matplotlib.pyplot as plt
 
+np.random.seed(23)
 
 # 定义双曲函数和他们的导数
 def tanh(x):
@@ -95,18 +96,33 @@ class NeuralNetwork:
             a = self.activation(np.dot(a, self.weights[l]))
         return a
 
+def print_evaluate(test_labels,predict_label):
+    print('confusion_matrix:')
+    print(metrics.confusion_matrix(test_labels, predict_label))
+
+    print('precision: ', end='')
+    print(metrics.precision_score(test_labels, predict_label, average=None))
+
+    print('recall:', end='')
+    print(metrics.recall_score(test_labels, predict_label, average=None))
+
+    print('accu:', end='')
+    print(metrics.accuracy_score(test_labels, predict_label))
+
+    print('classify_report:')
+    print(metrics.classification_report(test_labels, predict_label))
+
 def optLayer(layer):
     data = cd.createData(10000)
     features = data[:,0:-1]
     labels = data[:,-1]
     min_max_scaler = preprocessing.MinMaxScaler()
-    labels = min_max_scaler.fit_transform(labels)
-
+    labels = min_max_scaler.fit_transform(labels) #归一化
 
     train_features, test_features, train_labels, test_labels = train_test_split(
         features, labels, test_size=0.33, random_state=23323)
 
-    nn = nnk.NeuralNetwork(layers=[35,15,1])
+    nn = NeuralNetwork(layers=[35,layer,1])
     nn.fit(train_features,train_labels,0.1)
     predice_result_set = []
     for x in test_features:
@@ -114,7 +130,7 @@ def optLayer(layer):
         predice_result_set.append(y_pre)
 
     test_labels = min_max_scaler.inverse_transform(test_labels)
-    predice_result_set = min_max_scaler.inverse_transform(predice_result_set)
+    predice_result_set = min_max_scaler.inverse_transform(predice_result_set)#去归一化
 
     positive = 0
     for i in range(len(test_features)):
@@ -131,4 +147,9 @@ def optLayer(layer):
     # plt.plot(predice_result_set[:50],'r')
     # plt.show()
 
-print('acc:'+str(optLayer(25)))
+# acc_set = []
+# for i in range(10,50):
+#     acc_set.append(optLayer(i))
+# plt.plot(acc_set)
+# plt.show()
+print('accu:'+str(optLayer(24)))

@@ -1,16 +1,21 @@
 import random
 import numpy as np
 
-def createData(DATANUM):
+random.seed(2)
+
+
+def createData(DATANUM,IsNumpy = True):
     SourceData = []
     for _ in range(DATANUM):
         SourceData_single = list(np.zeros(35))
         SourceData_week = random.randint(0, 6)
         SourceData_weather = random.randint(0, 3)
         SourceData_time = random.randint(0, 23)
+
         SourceData_single[SourceData_week] = 1
         SourceData_single[SourceData_weather + 7] = 1
         SourceData_single[SourceData_time + 11] = 1
+
         SourceData.append(SourceData_single)
     #for each label :
     for sd in SourceData:
@@ -29,9 +34,15 @@ def createData(DATANUM):
                 sd.append(direction_5(time))
             elif weather == 2 or weather == 3:
                 sd.append(direction_6(time))
-
-    SourceData = np.array(SourceData)
-    return SourceData
+    #写入
+    with open('data.txt', 'w') as f:
+        f.writelines([str(data) + '\n' for data in SourceData])
+    #转为numpy矩阵
+    SourceData_array = np.array(SourceData)
+    if IsNumpy :
+        return SourceData_array
+    else:
+        return SourceData
 
 def find_index(list):
     for i in range(0,7):
@@ -133,4 +144,4 @@ def direction_6(time):
     else:
         return random.randint(1,3)
 
-# print(createData(100))
+createData(100)
