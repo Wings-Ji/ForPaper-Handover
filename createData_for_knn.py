@@ -1,5 +1,7 @@
 import random
 import numpy as np
+from sklearn.model_selection import train_test_split
+
 
 random.seed(2)
 
@@ -144,4 +146,10 @@ def direction_6(time):
     else:
         return random.randint(1,3)
 
-createData(100)
+def Train_Test_data(dataVolume):
+    data = createData(dataVolume)
+    features = data[:, 0:-1]
+    data_labels = data[:, -1]
+    train_features, test_features, train_labels, test_labels = train_test_split(
+        features, data_labels, test_size=0.33, random_state=23323)
+    return train_features, test_features, train_labels, test_labels

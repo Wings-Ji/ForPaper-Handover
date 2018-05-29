@@ -6,7 +6,7 @@ Decision Tree Source Code for Machine Learning in Action Ch. 3
 from math import log
 import operator
 import createData_for_knn as cd
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 def createDataSet(dataVolume):
     data = cd.createData(dataVolume)

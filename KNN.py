@@ -18,7 +18,7 @@ def classify(inX,dataSet,labels,k):
     sortedClassCount = sorted(classCount.items(),key=operator.itemgetter(1),reverse=True)
     return sortedClassCount[0][0]
 
-data = cd.createData(10000)              #[00000100010000010010]
+data = cd.createData(5000)              #[00000100010000010010]
 features = data[:,0:-1]
 labels = data[:,-1]
 train_features, test_features, train_labels, test_labels = train_test_split(
@@ -38,13 +38,19 @@ print('confusion_matrix:')
 print(metrics.confusion_matrix(test_labels,predict_label))
 
 print('precision: ',end='')
-print(metrics.precision_score(test_labels,predict_label,average=None))
+print(metrics.precision_score(test_labels,predict_label,average='macro'))
 
 print('recall:',end='')
-print(metrics.recall_score(test_labels,predict_label,average=None))
+print(metrics.recall_score(test_labels,predict_label,average='macro'))
 
 print('accu:',end='')
 print(metrics.accuracy_score(test_labels,predict_label))
 
 print('classify_report:')
 print(metrics.classification_report(test_labels,predict_label))
+print(metrics.hinge_loss(test_labels,))
+print('roc:')
+fpr, tpr, thresholds  = metrics.roc_curve(test_labels,predict_label,pos_label=1)
+print(fpr)
+print(tpr)
+print(thresholds)
