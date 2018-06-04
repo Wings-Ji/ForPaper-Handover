@@ -1,30 +1,50 @@
-import createData_for_knn as cd
-from sklearn.model_selection import GridSearchCV,cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
-import DecisionTreeClassifier as dclf
+from matplotlib import pyplot as plt
+import numpy as np
+import createData
+from sklearn.neural_network import MLPClassifier
+import data_normalized
+import csv
+import createData_for_knn as cd
+import random
+from sklearn import svm
 
-data = cd.createData(5000)
-x,y = data[:,:-1],data[:,-1]
-# dataSet, labels,testVec,testVec_label =tree.createDataSet(20000)
+def DecisionTree_best_estimator(X,y):
+    # k_fold = 1
+    MyDecisionTree = DecisionTreeClassifier(random_state=0)
+    # params ={'max_depth':range(10,40),'criterion':np.array(['entropy','gini'])}
+    # grid = GridSearchCV(MyDecisionTree,params)
+    # print('DecisionTree start ...')
+    # grid.fit(X,y)
+    # return grid.best_estimator_
+    MyDecisionTree.fit(x,y)
+    return MyDecisionTree
 
-MyDeciTree = DecisionTreeClassifier()
-print('DecisionTree:',end='')
-print(cross_val_score(MyDeciTree,x,y,cv=3))
+def svm_estimator(x,y):
+    svm_clf = svm.SVC(C=0.4,gamma='auto')
+    c_range = np.logspace(-2,10,13)
+    gamma_range = np.logspace(-9,3,13)
 
-bestTree = dclf.fit_model(x,y)
-print('DecisionTree(best para):',end='')
-print(cross_val_score(bestTree,x,y,cv=3))
+    params = dict(gamma = gamma_range,C = c_range)
+    grid = GridSearchCV(svm_clf,params)
+    grid.fit(x,y)
+    print(grid.best_params_)
+    return grid.best_estimator_
 
+def MLPClassifier_estimator(x,y):
+    clf = MLPClassifier()
+    params = {'hidden_layer_sizes': [(7, 7), (128,), (128, 7)],
+              'solver': ['lbfgs', 'sgd', 'adam'],'alpha':[0.0001,0.0005]}
+    grid = GridSearchCV(clf, param_grid=params)
+    grid.fit(x, y)
+    print('MLPClassifier ...')
+    print(grid.best_params_)
+    return grid.best_estimator_
 
-k_Neighbors_clf =KNeighborsClassifier(5)
-k_Neighbors_clf.fit(x,y)
-print('k-Neighbors:',end='')
-print(cross_val_score(k_Neighbors_clf,x,y,cv=3))
+if __name__ == '__main__':
+    # data = data_normalized.createData(8000)
+    data = createData.createData(5000)
+    x,y = data[:, :-1], data[:, -1]
 
-k_best = dclf.k_neighbors_best_estimator(x,y)
-print('k-Neighbors(best para):',end='')
-print(cross_val_score(k_best,x,y,cv=3))
-
-
-
+    print(cross_val_score(MLPClassifier_estimator(x,y),x,y))

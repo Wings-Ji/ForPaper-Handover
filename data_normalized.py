@@ -1,26 +1,24 @@
+#本数据包含星期、天气和时间 数据内容和createData_for_knn中的数据相同
+#只是格式上的不同，生成的数据最后进行了标准化处理
 import csv
 import random
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn import preprocessing
 
 random.seed(2)
 
 def createData(DATANUM, IsNumpy = True, CREATE_CSV = False):
     SourceData = []
     for _ in range(DATANUM):
-        SourceData_single = list(np.zeros(35))
         SourceData_week = random.randint(0, 6)
         SourceData_weather = random.randint(0, 3)
         SourceData_time = random.randint(0, 23)
-
-        SourceData_single[SourceData_week] = 1
-        SourceData_single[SourceData_weather + 7] = 1
-        SourceData_single[SourceData_time + 11] = 1
-
-        SourceData.append(SourceData_single)
+        # SourceData_others = random.randint(0,10)
+        SourceData.append([SourceData_week,SourceData_weather,SourceData_time])#,SourceData_others
     #for each label :
     for sd in SourceData:
-        week, weather, time = find_index(sd)
+        week, weather, time = sd[0],sd[1],sd[2]
         if week == 0 or week == 6:  # 周末
             if weather == 0:
                 sd.append(direction_1(time))
@@ -35,37 +33,26 @@ def createData(DATANUM, IsNumpy = True, CREATE_CSV = False):
                 sd.append(direction_5(time))
             elif weather == 2 or weather == 3:
                 sd.append(direction_6(time))
-    #写入
-    if CREATE_CSV == True:
-        featrueset = create_featrue()
-        with open('dataSet.csv', 'w',newline='') as f:
-            Iter_writer = csv.writer(f)
-            Iter_writer.writerow(featrueset)
-            for sd in SourceData:
-                Iter_writer.writerow(sd)
 
     #转为numpy矩阵
     SourceData_array = np.array(SourceData)
+    #特征标准化之后和标签拼接
+    feature_array = SourceData_array[:,:-1]
+    label_array = SourceData_array[:,-1]
+    feature_scaled = preprocessing.scale(feature_array)#标准化特征
+    data_scale = np.column_stack((feature_scaled,label_array))
+    # 写入
+    if CREATE_CSV == True:
+        featrueset = ['week','weather','time','directions']
+        with open('dataSet.csv', 'w', newline='') as f:
+            Iter_writer = csv.writer(f)
+            Iter_writer.writerow(featrueset)
+            for sd in list(data_scale):
+                Iter_writer.writerow(sd)
     if IsNumpy :
-        return SourceData_array
+        return data_scale
     else:
-        return SourceData
-
-def create_featrue():
-    weekset = []
-    timeset = []
-    weatherset = []
-    for i in range(0, 24):
-        if i < 7:
-            weekset.append('week' + str(i))
-        if i < 4:
-            weatherset.append('weather' + str(i))
-        if i < 24:
-            timeset.append('time' + str(i))
-    weekset.extend(weatherset)
-    weekset.extend(timeset)
-    weekset.extend(['Direction'])
-    return weekset
+        return list(data_scale)
 
 def find_index(list):
     for i in range(0,7):
