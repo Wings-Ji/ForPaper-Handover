@@ -38,11 +38,11 @@ def createData(DATANUM, IsNumpy = True, CREATE_CSV = False):
 
     #转为numpy矩阵
     SourceData_array = np.array(SourceData)
-    #特征标准化之后和标签拼接
-    feature_array = SourceData_array[:,:-1]
-    label_array = SourceData_array[:,-1]
-    feature_scaled = preprocessing.scale(feature_array)#标准化特征
-    SourceData_array = np.column_stack((feature_scaled,label_array))
+    # #特征标准化之后和标签拼接
+    # feature_array = SourceData_array[:,:-1]
+    # label_array = SourceData_array[:,-1]
+    # feature_scaled = preprocessing.scale(feature_array)#标准化特征
+    # SourceData_array = np.column_stack((feature_scaled,label_array))
     # 写入
     if CREATE_CSV == True:
         # featrueset = ['week','weather','time','directions']

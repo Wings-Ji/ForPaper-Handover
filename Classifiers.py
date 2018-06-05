@@ -24,8 +24,8 @@ def DecisionTree_best_estimator(X,y):
     return grid.best_estimator_
 
 def RandomForest_best_estimator(X,y):
-    rf = RandomForestClassifier(n_estimators=42, criterion='gini', max_depth=44)
-    params = {'criterion': ['gini', 'entropy']}  # 'max_depth':range(40,60,2),'n_estimators':range(26,50,2)
+    rf = RandomForestClassifier(n_estimators=26, criterion='gini', max_depth=18)
+    params =dict(n_estimators = [24,26,28],max_depth = [14,18,22])  # 'max_depth':range(40,60,2),'n_estimators':range(26,50,2)
     print('RandomForest start search...')
     grid = GridSearchCV(rf, params)
     grid.fit(X, y)
@@ -44,27 +44,19 @@ def k_neighbors_best_estimator(x,y):
     return grid.best_estimator_
 
 def svm_estimator(x,y):
-    svm_clf = svm.SVC(C=0.4, kernel='linear', gamma='auto')
+    svm_clf = svm.SVC(C=110, kernel='rbf',gamma='auto')
     svm_clf.fit(x, y)
     print('svm start...')
     print(cross_val_score(svm_clf, x, y, cv=3))
     return svm_clf
 
 def MLPClassifier_estimator(x,y):
-    clf = MLPClassifier(solver='adam',alpha=0.0001,hidden_layer_sizes=(5,2))
-    params = {'hidden_layer_sizes': [(7, 7), (128,), (128, 7)],'solver': {'lbfgs', 'sgd', 'adam'}}
+    clf = MLPClassifier(solver = 'adam')
+    params = {'hidden_layer_sizes': [(130,50,7),(128, 7)],
+              'alpha':[0.0025,0.003]}
     grid = GridSearchCV(clf, param_grid=params)
     grid.fit(x, y)
     print('MLPClassifier ...')
-    print(grid.best_params_)
-    return grid.best_estimator_
-
-def GaussianNB(x,y):
-    gnb = GaussianNB()
-    params = {}
-    grid = GridSearchCV(gnb,param_grid=params)
-    grid.fit(x,y)
-    print('GaussianNB ...')
     print(grid.best_params_)
     return grid.best_estimator_
 
@@ -102,27 +94,37 @@ def dataVolume_runtime(dataVolume):
     time_svm_end = time.time()
     svmtime = time_svm_end-time_svm_start
 
+    #MLPClassifier
+    nn_best = MLPClassifier_estimator(x,y)
+    time_nn_start = time.time()
+    nn_score = cross_val_score(nn_best,x,y)
+    time_nn_end = time.time()
+    nntime = time_nn_end - time_nn_start
+
+
     # return DTScore,k_Neighbors_score,rf_score,svm_score,dttime,knntime,rftime,svmtime
     return float(sum(DTScore)) / len(DTScore),float(sum(k_Neighbors_score)) / len(k_Neighbors_score),\
-           float(sum(rf_score)) / len(rf_score),float(sum(svm_score)) / len(svm_score),\
-           dttime,knntime,rftime,svmtime
+           float(sum(rf_score)) / len(rf_score),float(sum(svm_score)) / len(svm_score), \
+           float(sum(nn_score)) / len(nn_score),dttime,knntime,rftime,svmtime,nntime
 
 def polt_estimators(startVolume,endVolume,span):#决策树、kNN、随机森林、svm
-    dtscoreset,knnscoreset, RFscoreset,SVMscoreset= [], [], [], []
-    dttimeset,knntimeset, RFtimeset, SVMtimeset = [], [], [], []
+    dtscoreset,knnscoreset, RFscoreset,SVMscoreset,NNscoreset= [], [], [], [], []
+    dttimeset,knntimeset, RFtimeset, SVMtimeset, NNtimeset = [], [], [], [], []
     for dataVolume in range(startVolume,endVolume,span):
         print('start times:' + str(dataVolume))
-        DTScore, k_Neighbors_score, rf_score, svm_score, \
-        dttime, knntime, rftime, svmtime = dataVolume_runtime(dataVolume)
+        DTScore, k_Neighbors_score, rf_score, svm_score, nn_score, \
+        dttime, knntime, rftime, svmtime, nntime = dataVolume_runtime(dataVolume)
         dtscoreset.append(DTScore)
         knnscoreset.append(k_Neighbors_score)
         RFscoreset.append(rf_score)
         SVMscoreset.append(svm_score)
+        NNscoreset.append(nn_score)
 
         dttimeset.append(dttime)
         knntimeset.append(knntime)
         RFtimeset.append(rftime)
         SVMtimeset.append(svmtime)
+        NNtimeset.append(nntime)
     VolumesRange = [i for i in range(startVolume,endVolume,span)]
     # axes1 = plt.subplot(2,2,1)
     plt.figure(1)
@@ -130,6 +132,7 @@ def polt_estimators(startVolume,endVolume,span):#决策树、kNN、随机森林�
     plt.plot(VolumesRange, knntimeset, 'yo-',label= 'k-Neighbors')
     plt.plot(VolumesRange, RFtimeset, 'gs-',label= 'RandomForest')
     plt.plot(VolumesRange, SVMtimeset, 'bp-',label = 'SVM')
+    plt.plot(VolumesRange, NNtimeset, 'mv-', label='neural_network')
     plt.xlabel('DataVolume')
     plt.ylabel('PredictTime')
     plt.legend(loc=2,fontsize = 9)
@@ -138,6 +141,7 @@ def polt_estimators(startVolume,endVolume,span):#决策树、kNN、随机森林�
     plt.plot(VolumesRange, knnscoreset, 'yo-',label= 'k-Neighbors')
     plt.plot(VolumesRange, RFscoreset, 'gs-',label= 'RandomForest')
     plt.plot(VolumesRange, SVMscoreset, 'bp-',label = 'SVM')
+    plt.plot(VolumesRange, NNscoreset, 'mv-', label='neural_network')
     # plt.ylim(0,1.3)
     plt.xlabel('DataVolume')
     plt.ylabel('PredictScores')
@@ -153,4 +157,4 @@ def plotTree(clf):
 
 
 if __name__ == '__main__':
-    polt_estimators(100,4000,500)
+    polt_estimators(100,2500,300)
