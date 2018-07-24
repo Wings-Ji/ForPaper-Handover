@@ -36,14 +36,15 @@ def svm_estimator(x,y):
     return grid.best_estimator_
 
 def MLPClassifier_estimator(x,y):
-    clf = MLPClassifier(solver = 'adam')
-    params = {'hidden_layer_sizes': [(130,50,7),(128, 7)],
-              'alpha':[0.0025,0.003]}
+    clf = MLPClassifier(hidden_layer_sizes=(128, 7),random_state=1)
+    # clf.fit(x, y)
+    params = {'hidden_layer_sizes': [(500,),(128, 7),(50,50)],
+              'alpha':[0.0001,0.003],'solver':['adam','lbfgs']}
     grid = GridSearchCV(clf, param_grid=params)
     grid.fit(x, y)
     print('MLPClassifier ...')
     print(grid.best_params_)
-    return grid.best_estimator_
+    return clf  # grid.best_estimator_
 
 def GaussianNB_estimator(x,y):
     gnb = GaussianNB()
@@ -69,7 +70,7 @@ def RandomForest_best_estimator(X,y):
 
 if __name__ == '__main__':
     # data = data_normalized.createData(8000)
-    data = createData.createData(5000)
+    data = createData.createData(600)
     x,y = data[:, :-1], data[:, -1]
 
-    print(cross_val_score(RandomForest_best_estimator(x,y),x,y))
+    print(cross_val_score(MLPClassifier_estimator(x,y),x,y,cv=2))
