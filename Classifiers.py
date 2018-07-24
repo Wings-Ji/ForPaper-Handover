@@ -1,5 +1,4 @@
 import time
-import data_normalized
 import createData
 import matplotlib.pyplot as plt
 import createData_for_knn as cd
@@ -7,17 +6,17 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split,GridSearchCV,cross_val_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.naive_bayes import GaussianNB
 from sklearn import tree,svm
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 from IPython.display import Image
-import pydotplus
+# import pydotplus
+import vote
 
 def DecisionTree_best_estimator(X,y):
     # k_fold = 1
     MyDecisionTree = DecisionTreeClassifier(random_state=0)
-    params ={'max_depth':range(10,40),'criterion':np.array(['entropy','gini'])}
+    params ={'max_depth':range(10,40,3),'criterion':np.array(['entropy','gini'])}
     grid = GridSearchCV(MyDecisionTree,params)
     print('DecisionTree start ...')
     grid.fit(X,y)
@@ -29,7 +28,7 @@ def RandomForest_best_estimator(X,y):
     print('RandomForest start search...')
     grid = GridSearchCV(rf, params)
     grid.fit(X, y)
-    # print(grid.best_params_)
+    print(grid.best_params_)
     # print(grid.best_score_)
     rf_best = grid.best_estimator_
     print(cross_val_score(rf_best, X, y, cv=3))
@@ -51,14 +50,15 @@ def svm_estimator(x,y):
     return svm_clf
 
 def MLPClassifier_estimator(x,y):
-    clf = MLPClassifier(solver = 'adam')
-    params = {'hidden_layer_sizes': [(130,50,7),(128, 7)],
-              'alpha':[0.0025,0.003]}
-    grid = GridSearchCV(clf, param_grid=params)
-    grid.fit(x, y)
-    print('MLPClassifier ...')
-    print(grid.best_params_)
-    return grid.best_estimator_
+    clf = MLPClassifier(solver = 'adam',hidden_layer_sizes = (128,7))
+    clf.fit(x,y)
+    # params = {'hidden_layer_sizes': [(200,),(128,),(128, 7)],
+    #           'alpha':[0.0025,0.003]}
+    # grid = GridSearchCV(clf, param_grid=params)
+    # grid.fit(x, y)
+    # print('MLPClassifier ...')
+    # print(grid.best_params_)
+    return clf #grid.best_estimator_
 
 def dataVolume_runtime(dataVolume):
     # data = cd.createData(dataVolume)
@@ -97,34 +97,40 @@ def dataVolume_runtime(dataVolume):
     #MLPClassifier
     nn_best = MLPClassifier_estimator(x,y)
     time_nn_start = time.time()
-    nn_score = cross_val_score(nn_best,x,y)
+    nn_score = cross_val_score(nn_best,x,y,cv=6)
     time_nn_end = time.time()
     nntime = time_nn_end - time_nn_start
+
+    #vote
+    vote_time,vote_acc = vote.clf_vote(dataVolume*2)
+
 
 
     # return DTScore,k_Neighbors_score,rf_score,svm_score,dttime,knntime,rftime,svmtime
     return float(sum(DTScore)) / len(DTScore),float(sum(k_Neighbors_score)) / len(k_Neighbors_score),\
            float(sum(rf_score)) / len(rf_score),float(sum(svm_score)) / len(svm_score), \
-           float(sum(nn_score)) / len(nn_score),dttime,knntime,rftime,svmtime,nntime
+           float(sum(nn_score)) / len(nn_score),vote_acc,dttime,knntime,rftime,svmtime,nntime,vote_time
 
 def polt_estimators(startVolume,endVolume,span):#决策树、kNN、随机森林、svm
-    dtscoreset,knnscoreset, RFscoreset,SVMscoreset,NNscoreset= [], [], [], [], []
-    dttimeset,knntimeset, RFtimeset, SVMtimeset, NNtimeset = [], [], [], [], []
+    dtscoreset,knnscoreset, RFscoreset,SVMscoreset,NNscoreset,Votescoreset = [], [], [], [], [], []
+    dttimeset,knntimeset, RFtimeset, SVMtimeset, NNtimeset,Votetimeset = [], [], [], [], [], []
     for dataVolume in range(startVolume,endVolume,span):
         print('start times:' + str(dataVolume))
-        DTScore, k_Neighbors_score, rf_score, svm_score, nn_score, \
-        dttime, knntime, rftime, svmtime, nntime = dataVolume_runtime(dataVolume)
+        DTScore, k_Neighbors_score, rf_score, svm_score, nn_score, vote_score, \
+        dttime, knntime, rftime, svmtime, nntime, votetime = dataVolume_runtime(dataVolume)
         dtscoreset.append(DTScore)
         knnscoreset.append(k_Neighbors_score)
         RFscoreset.append(rf_score)
         SVMscoreset.append(svm_score)
         NNscoreset.append(nn_score)
+        Votescoreset.append(vote_score)                             #vote
 
         dttimeset.append(dttime)
         knntimeset.append(knntime)
         RFtimeset.append(rftime)
         SVMtimeset.append(svmtime)
         NNtimeset.append(nntime)
+        Votetimeset.append(votetime)                                #vote
     VolumesRange = [i for i in range(startVolume,endVolume,span)]
     # axes1 = plt.subplot(2,2,1)
     plt.figure(1)
@@ -133,6 +139,7 @@ def polt_estimators(startVolume,endVolume,span):#决策树、kNN、随机森林�
     plt.plot(VolumesRange, RFtimeset, 'gs-',label= 'RandomForest')
     plt.plot(VolumesRange, SVMtimeset, 'bp-',label = 'SVM')
     plt.plot(VolumesRange, NNtimeset, 'mv-', label='neural_network')
+    plt.plot(VolumesRange, Votetimeset, 'kv-.', label='Proposed')        #vote
     plt.xlabel('DataVolume')
     plt.ylabel('PredictTime')
     plt.legend(loc=2,fontsize = 9)
@@ -142,6 +149,7 @@ def polt_estimators(startVolume,endVolume,span):#决策树、kNN、随机森林�
     plt.plot(VolumesRange, RFscoreset, 'gs-',label= 'RandomForest')
     plt.plot(VolumesRange, SVMscoreset, 'bp-',label = 'SVM')
     plt.plot(VolumesRange, NNscoreset, 'mv-', label='neural_network')
+    plt.plot(VolumesRange, Votescoreset, 'kv--', label='Proposed')       #vote
     # plt.ylim(0,1.3)
     plt.xlabel('DataVolume')
     plt.ylabel('PredictScores')
@@ -157,4 +165,4 @@ def plotTree(clf):
 
 
 if __name__ == '__main__':
-    polt_estimators(100,2500,300)
+    polt_estimators(100,3000,200)

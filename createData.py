@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 
-random.seed(2)
+random.seed(0)   #2
 
 def createData(DATANUM, IsNumpy = True, CREATE_CSV = False):
     SourceData = []
